@@ -6,7 +6,8 @@ const MicComponent = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioData, setAudioData] = useState(null);
   const [transcription, setTranscription] = useState(null); // Changed state for transcription
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(null); // Add this line to fix the error
 
   const startRecording = () => {
     setIsRecording(true);
@@ -20,6 +21,7 @@ const MicComponent = () => {
     const audioUrl = URL.createObjectURL(recordedBlob.blob);
     setAudioData({ ...recordedBlob, blobURL: audioUrl });
     setLoading(true);
+    setError(null); // Reset any previous error
     await sendAudioToBackend(recordedBlob);
     setLoading(false);
   };
@@ -36,46 +38,95 @@ const MicComponent = () => {
       const transcriptionText = response.data.transcription; // Get transcription
       setTranscription(transcriptionText); // Store the transcription text
     } catch (error) {
-      console.error('Error uploading audio:', error);
+      console.error('Error uploading audio, please try again later.', error);
+      setError('Error uploading audio, please try again later.');
     }
   };
 
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        textAlign: 'center',
+        backgroundColor: '#ADD8E6', // Light blue background
+        position: 'relative', // To position the symbols
+      }}
+    >
+      <h1 style={{ color: '#FFFFFF', fontSize: '2.5rem' }}>CALCULATOR</h1>
 
-      <h1>Calculator</h1>
-
+      {/* ReactMic */}
       <ReactMic
         record={isRecording}
-        className="sound-wave"
         onStop={handleRecordingStop}
+        className="sound-wave"
         strokeColor="#000000"
-        backgroundColor="#FF4081"
+        backgroundColor="#ADD8E6"
       />
 
+      {/* Buttons */}
       <div>
-        <button onClick={startRecording} disabled={isRecording}>Start Recording</button>
-        <button onClick={stopRecording} disabled={!isRecording}>Stop Recording</button>
+        <button
+          onClick={startRecording}
+          disabled={isRecording || loading}
+          style={{
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            padding: '10px 20px',
+            textAlign: 'center',
+            fontSize: '16px',
+            margin: '10px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          Start Recording
+        </button>
+        <button
+          onClick={stopRecording}
+          disabled={!isRecording || loading}
+          style={{
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            padding: '10px 20px',
+            textAlign: 'center',
+            fontSize: '16px',
+            margin: '10px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          Stop Recording
+        </button>
       </div>
 
+      {/* Loading Indicator */}
+      {loading && <p style={{ color: 'white' }}>Processing audio...</p>}
+
+      {/* Error Message */}
+      {error && <p style={{ color: 'red' }}>{error}</p>} {/* Show error if it exists */}
+
+      {/* Recorded Audio */}
       {audioData && (
-        <audio controls>
+        <audio controls style={{ marginTop: '20px' }}>
           <source src={audioData.blobURL} type="audio/wav" />
         </audio>
       )}
 
-      {loading && <p>Processing audio...</p>}
-
-      {/* Display the transcription text instead of audio */}
+      {/* Transcription */}
       {transcription && (
         <div>
-          <h2>Transcription:</h2>
-          <p>{transcription}</p>
+          <h2 style={{ color: 'white' }}>Transcription:</h2>
+          <p style={{ color: 'white' }}>{transcription}</p>
         </div>
       )}
-
     </div>
   );
 };
 
-export default MicComponent;
+export default MicComponent;
